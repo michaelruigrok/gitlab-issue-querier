@@ -1,26 +1,8 @@
 #!/usr/bin/env raku
 
-use WWW;
+use lib '.';
 use JSON::Fast;
-use URI::Query::FromHash;
-use URI::Escape;
-
-sub gitlabIssueRequest(%args) {
-	my $path;
-	with %args<project> {
-		$path = "projects/{uri-escape $_}/issues";
-		%args<project>:delete;
-	} orwith %args<group> {
-		$path = "groups/{uri-escape $_}/issues";
-		%args<group>:delete;
-	} else {
-		$path = "issues";
-	}
-
-	jget("%*ENV<GITLAB_URL>/api/v4/$path?{hash2query(%args)}",
-		PRIVATE-TOKEN => %*ENV<GITLAB_TOKEN>
-	).&to-json;
-}
+use GitlabIssueRequest;
 
 grammar GIQL {
 
@@ -98,9 +80,9 @@ class GIQLActions {
 }
 
 sub MAIN(*@args) {
-	my @queries = GIQL.parse(@args.join(' '), actions => Longer.new).made;
-	for @queries {
-		# say hash2query($_);
-		say gitlabIssueRequest(%$_);
-	}
+	my @queries = GIQL.parse(@args.join(' '), actions => GIQLActions.new).made;
+	my @results = @queries.race(:1batch).map({
+			|gitlabIssueRequest(|%$_);
+		});
+	@results.unique(:as(*<id>)).&to-json.print;
 }
