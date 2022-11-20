@@ -52,34 +52,48 @@ grammar GIQL {
 
 }
 
-class GIQLActions {
-	method TOP($/)      { make $/<or>.made; }
-	method brackets($/) { make $/<TOP>.made; }
+class GIQB {
 
-	method or($/)  { make $/.values.map(|*.made); }
-	method and($/) {
+	method or(*$queries)  { 
+		$queries.map(|*);
+	}
+
+	method and(*$queries) {
 		# cross-product a & (b | c) into (a & b) | (a & c)
 		# (each letter representing a list of requirements)
-		make [X] $/.values.map(*.made)
+		([X] $queries)
 			# combine inner &'s into single lists
 			.map(*.flat);
 	}
 
-	method test:sym<equals>($/) {
-		make @(
-			@( [=>] $/<term>.map(*.made) ),
+	method testEquals(Str $key, Str $value) {
+		@( # List of Ors
+			@( # List of Ands
+				$key => $value,
+			),
 		);
 	}
-	# method test:sym<regex>($/)  { make [~~] $/<term>; }
-	method test:sym<in>($/)     {
-		make $/.<list>.map(*.made)
-			.map({
-					@( $/<term> => $_ ),
-			});
-		make $/<term>.made (elem) $/<list>.made;
+
+}
+
+class GIQLActions {
+	# Common structure: make all children, return as list
+	method m($/) { $/.values.map(*.made); }
+
+	method TOP($/)      { make $/<or>.made; }
+	method brackets($/) { make $/<TOP>.made; }
+
+	method or($/)  { make GIQB.or($.m($/)); }
+	method and($/) { make GIQB.and($.m($/)); }
+
+	method test:sym<equals>($/) { make GIQB.testEquals(|$.m($/)); }
+	method test:sym<regex>($/)  { make GIQB.testRegex(|$.m($/)); }
+
+	method test:sym<in>($/) {
+		make $.m($/).map({ $/<term> => $_ , });
 	}
 
-	# method list($/) { make $/<term>.map(*.made); }
+	method list($/) { make $.m($/); }
 	method term($/) { make ~$/[0]; }
 }
 
