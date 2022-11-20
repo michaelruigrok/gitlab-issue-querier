@@ -5,7 +5,7 @@ use JSON::Fast;
 use URI::Query::FromHash;
 use URI::Escape;
 
-sub gqlRequest(%args) {
+sub gitlabIssueRequest(%args) {
 	my $path;
 	with %args<project> {
 		$path = "projects/{uri-escape $_}/issues";
@@ -22,7 +22,7 @@ sub gqlRequest(%args) {
 	).&to-json;
 }
 
-grammar GQL {
+grammar GIQL {
 
 	regex TOP { <or> }
 
@@ -52,7 +52,7 @@ grammar GQL {
 
 }
 
-class Longer {
+class GIQLActions {
 	method TOP($/)      { make $/<or>.made; }
 	method brackets($/) { make $/<TOP>.made; }
 
@@ -84,9 +84,9 @@ class Longer {
 }
 
 sub MAIN(*@args) {
-	my @queries = GQL.parse(@args.join(' '), actions => Longer.new).made;
+	my @queries = GIQL.parse(@args.join(' '), actions => Longer.new).made;
 	for @queries {
 		# say hash2query($_);
-		say gqlRequest(%$_);
+		say gitlabIssueRequest(%$_);
 	}
 }
