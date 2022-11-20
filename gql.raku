@@ -1,9 +1,9 @@
 #!/usr/bin/env raku
 
-use lib '.';
+use lib './lib';
 use JSON::Fast;
-use GitlabIssueQuery;
-use GitlabIssueRequest;
+use Gitlab::Issues::Query;
+use Gitlab::Issues::Request;
 
 grammar GIQL {
 

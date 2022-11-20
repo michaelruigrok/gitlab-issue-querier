@@ -1,0 +1,25 @@
+{
+  "name": "Gitlab::IssueQueryLanguage",
+  "description": "A Query Language for Gitlab Issues",
+  "version": "0.0.2",
+  "perl": "6.*",
+  "authors": [
+    "Michael Ruigrok <ruigrok.michael@gmail.com>"
+  ],
+  "depends": [
+	"JSON::Fast",
+	"Net::HTTP::GET",
+	"URI::Escape",
+	"URI::Query::FromHash"
+  ],
+  "provides": {
+    "Gitlab::Issues::Query": "lib/Gitlab/Issues/Query.rakumod",
+	"Gitlab::Issues::Request": "lib/Gitlab/Issues/Request.rakumod"
+  },
+  "license": "GPL-2.0",
+  "tags": [
+    "Gitlab",
+    "Client"
+  ],
+  "source-url": "https://github.com/michaelruigrok/gitlab-issue-querier.git"
+}
