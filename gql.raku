@@ -5,6 +5,7 @@ use JSON::Fast;
 use Gitlab::Issues::Query;
 use Gitlab::Issues::Request;
 
+# Nested regex match engine
 grammar GIQL {
 
 	regex TOP { <or> }
@@ -35,6 +36,8 @@ grammar GIQL {
 
 }
 
+# Behaviour corresponding to each regex match type
+# Delegated to GitlabIssueQueryBuilder to assemble a series of gitlab API requests.
 class GIQLActions {
 	# Common structure: make all children, return as list
 	method m($/) { $/.values.map(*.made); }
