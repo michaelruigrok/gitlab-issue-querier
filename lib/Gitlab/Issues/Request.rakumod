@@ -23,6 +23,43 @@ class GINot {
 	has Str  $milestone_id;
 }
 
+sub mergeClass($type, $a, $b, $final) { 
+	for $type.^attributes(:local) {
+		$_.set_value($final, ($_.get_value($a) && $_.get_value($b)));
+	}
+}
+
+
+class GitlabIssueRequest is export {
+	has Str  $project;
+	has Str  $group;
+	has Int  $assignee_id;
+	has Str  $assignee_username;
+	has Int  $author_id;
+	has Str  $author_username;
+	has Bool $confidential;
+	has Date $created_after;
+	has Date $created_before;
+	has Str  $due_date;
+	has List $iids where { $_.all ~~ Int } = [];
+	has GISearchIn  $in;
+	has GIIssueType  $issue_type;
+	has List  $labels where { $_.all ~~ Str } = [];
+	has Str   $milestone;
+	has Str   $milestone_id;
+	has Str   $my_reaction_emoji;
+	has Bool  $non_archived;
+	has GINot $not;
+	has GIOrderBy $order_by;
+	has Str     $scope;
+	has Str     $search;
+	has GISort  $sort;
+	has GIState $state;
+	has Date    $updated_after;
+	has Date    $updated_before;
+	has Bool    $with_labels_details;
+}
+
 proto sub gitlabIssueRequest(
 	Str  :$project,
 	Str  :$group,

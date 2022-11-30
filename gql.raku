@@ -36,18 +36,23 @@ grammar GIQL {
 
 }
 
+my \GIQB = GitlabIssueQueryBuilder;
+
 # Behaviour corresponding to each regex match type
 # Delegated to GitlabIssueQueryBuilder to assemble a series of gitlab API requests.
 class GIQLActions {
 	# Common structure: make all children, return as list
 	method m($/) { $/.values.map(*.made); }
+	# TODO: See if traits would be helpful in reducing repetition here.
 
 	method TOP($/)      { make $/<or>.made; }
+	
+	# TODO: Call these compounds using :sym
 	method brackets($/) { make $/<TOP>.made; }
+	method or($/)  { make GIQB.or(|$.m($/)); }
+	method and($/) { make GIQB.and(|$.m($/)); }
 
-	method or($/)  { make GIQB.or($.m($/)); }
-	method and($/) { make GIQB.and($.m($/)); }
-
+	# Maybe "Comparison" is a better name?
 	method test:sym<equals>($/) { make GIQB.testEquals(|$.m($/)); }
 	method test:sym<regex>($/)  { make GIQB.testRegex(|$.m($/)); }
 
@@ -60,9 +65,6 @@ class GIQLActions {
 }
 
 sub MAIN(*@args) {
-	my @queries = GIQL.parse(@args.join(' '), actions => GIQLActions.new).made;
-	my @results = @queries.race(:1batch).map({
-			|gitlabIssueRequest(|%$_);
-		});
-	@results.unique(:as(*<id>)).&to-json.print;
+	my $queries = GIQL.parse(@args.join(' '), actions => GIQLActions.new).made;
+	$queries.exec.&to-json.put;
 }
