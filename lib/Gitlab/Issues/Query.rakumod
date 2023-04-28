@@ -99,30 +99,28 @@ class GitlabIssueQuery {
 
 	multi submethod BUILD(:@!options!) {}
 
-	multi submethod BUILD(:$equals, :$regex) {
-		my $conj = GIQConjunction.new;
-		@!options = ($conj);
-		self.and(:$equals, :$regex);
+	multi submethod BUILD(:@equals, :@regex) {
+		@!options = GIQConjunction.new,;
+		for @equals // [] {
+			@!options[0].addEquals(.key, .value);
+		}
+		for @regex // [] {
+			@!options[0].addRegex(.key, .value);
+		}
 	}
 
-	method gist() { "GIQ<{@!options.gist}>"; }
+	method gist() { "GIQ<\n{@!options.map({"{$_.gist}\n"})}\n>"; }
 
 	method or(*@queries) { 
 		# To OR with other values, simply merge the list of ORs
 		GitlabIssueQuery.new(options => @queries.map(|*.options));
 	}
 
-	multi method and(:$equals, :$regex) {
-		for $equals // [] {
-			@!options[0].addEquals(.key, .value);
-		}
-		for $regex // [] {
-			@!options[0].addRegex(.key, .value);
-		}
-		return self
+	multi method and(*@queries where self.defined) {
+		$.and(self // Empty, |@queries);
 	}
 
-	multi method and(*@queries) {
+	multi method and(*@queries) is pure {
 		# We need to move these outer &'s to the inner Conjunctions.
 		# cross-product 'a & (b | c)' into '(a & b) | (a & c)'
 		# (each letter represents a GIQConjunction)
@@ -136,22 +134,14 @@ class GitlabIssueQuery {
 		my @results = @.options.race(:1batch).map({
 			|gitlabIssueRequest(|$_.equals.other);
 		}).unique(as => *<id>);
+		return @results;
 	}
 }
 
-class GitlabIssueQueryBuilder is export {
-
-	method or(*@queries)  { 
-		GitlabIssueQuery.or(|@queries);
-	}
-
-	method and(*@queries) {
-		GitlabIssueQuery.and(|@queries);
-	}
-
-	method testEquals(Str $key, Str $value) {
-		GitlabIssueQuery.new(equals => ($key => $value));
-	}
-
+multi sub infix:<&>(GitlabIssueQuery $a!, GitlabIssueQuery $b = GitlabIssueQuery.new) is export is pure {
+	GitlabIssueQuery.and($a, $b);
 }
 
+multi sub infix:<|>(GitlabIssueQuery $a!, GitlabIssueQuery $b) is export is pure {
+	GitlabIssueQuery.or($a, $b);
+}

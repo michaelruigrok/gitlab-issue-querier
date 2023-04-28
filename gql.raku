@@ -36,7 +36,7 @@ grammar GIQL {
 
 }
 
-my \GIQB = GitlabIssueQueryBuilder;
+my \GIQ = GitlabIssueQuery;
 
 # Behaviour corresponding to each regex match type
 # Delegated to GitlabIssueQueryBuilder to assemble a series of gitlab API requests.
@@ -49,12 +49,12 @@ class GIQLActions {
 	
 	# TODO: Call these compounds using :sym
 	method brackets($/) { make $/<TOP>.made; }
-	method or($/)  { make GIQB.or(|$.m($/)); }
-	method and($/) { make GIQB.and(|$.m($/)); }
+	method or($/) { make [|] |$.m($/); }
+	method and($/) { make [&] |$.m($/); }
 
 	# Maybe "Comparison" is a better name?
-	method test:sym<equals>($/) { make GIQB.testEquals(|$.m($/)); }
-	method test:sym<regex>($/)  { make GIQB.testRegex(|$.m($/)); }
+	method test:sym<equals>($/) { make GIQ.new(equals => $.m($/).Map.pairs); }
+	method test:sym<regex>($/)  { make GIQ.new(regex  => $.m($/).Map.pairs); }
 
 	method test:sym<in>($/) {
 		make $.m($/).map({ $/<term> => $_ , });
@@ -66,5 +66,5 @@ class GIQLActions {
 
 sub MAIN(*@args) {
 	my $queries = GIQL.parse(@args.join(' '), actions => GIQLActions.new).made;
-	$queries.exec.&to-json.put;
+	$queries.exec.map(*<web_url>).put;
 }
