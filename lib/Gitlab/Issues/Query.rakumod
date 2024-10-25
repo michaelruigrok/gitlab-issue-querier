@@ -37,7 +37,7 @@ class ComparerConjunction {
 	}
 }
 
-multi sub infix:<&>(ComparerConjunction $a, ComparerConjunction $b) is export {
+multi sub infix:<AND>(ComparerConjunction $a, ComparerConjunction $b) is export {
 	ComparerConjunction.new(
 		other => (|$a.other.kv, |$b.other.kv),
 		iids => ($a.iids (|) $b.iids),
@@ -76,14 +76,14 @@ class GIQConjunction {
 	}
 }
 
-multi sub infix:<&>(GIQConjunction $a!, GIQConjunction $b = GIQConjunction.new) is export is pure {
+multi sub infix:<AND>(GIQConjunction $a!, GIQConjunction $b = GIQConjunction.new) is export is pure {
 	if $a.equals.other (&) $b.equals.other -> $_ {
 			X::ConflictingTest.new(test => $_.gist).throw;
 	}
 
 	GIQConjunction.new(
-		equals => ($a.equals & $b.equals),
-		regex  => ($a.regex  & $b.regex),
+		equals => ($a.equals AND $b.equals),
+		regex  => ($a.regex  AND $b.regex),
 	);
 
 }
@@ -121,12 +121,12 @@ class GitlabIssueQuery {
 	}
 
 	multi method and(*@queries) is pure {
-		# We need to move these outer &'s to the inner Conjunctions.
-		# cross-product 'a & (b | c)' into '(a & b) | (a & c)'
+		# We need to move these outer AND's to the inner Conjunctions.
+		# cross-product 'a AND (b OR c)' into '(a AND b) OR (a AND c)'
 		# (each letter represents a GIQConjunction)
 		my @options = ([X] @queries.map(*.options))
-			# combine inner lists of &'s into a single GIQConjunction
-			.map({ [&] $_ });
+			# combine inner lists of AND's into a single GIQConjunction
+			.map({ [AND] $_ });
 		GitlabIssueQuery.new(:@options);
 	}
 
@@ -138,10 +138,10 @@ class GitlabIssueQuery {
 	}
 }
 
-multi sub infix:<&>(GitlabIssueQuery $a!, GitlabIssueQuery $b = GitlabIssueQuery.new) is export is pure {
+multi sub infix:<AND>(GitlabIssueQuery $a!, GitlabIssueQuery $b = GitlabIssueQuery.new) is export is pure {
 	GitlabIssueQuery.and($a, $b);
 }
 
-multi sub infix:<|>(GitlabIssueQuery $a!, GitlabIssueQuery $b) is export is pure {
+multi sub infix:<OR>(GitlabIssueQuery $a!, GitlabIssueQuery $b) is export is pure {
 	GitlabIssueQuery.or($a, $b);
 }

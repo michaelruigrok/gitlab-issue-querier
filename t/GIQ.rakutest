@@ -1,0 +1,49 @@
+use Test;
+use lib 'lib';
+use Gitlab::Issues::Query;
+my $compConjA = ComparerConjunction.new(
+	other => %(1,2),
+	labels => ('la' => 'foo', 'lb' => 'foo'),
+	iids => (101, 102),
+);
+
+my $compConjB = ComparerConjunction.new(
+	other => %(5,6),
+	labels => ('lb' => 'bar', 'lc' => 'bar'),
+	iids => (105, 106),
+);
+
+my $compConjC = ComparerConjunction.new(
+	other => %(8,6),
+	labels => ('lb' => 'bar', 'lc' => 'bar'),
+	iids => (105, 106),
+);
+
+is($compConjA.other, %(1 => 2), 'base other test');
+is($compConjA.labels, ('la' => 'foo', 'lb' => 'foo'), 'base labels test');
+is($compConjA.iids, (101, 102), 'base iids test');
+is(($compConjA AND $compConjB).other, %(1 => 2, 5 => 6));
+is(($compConjA AND $compConjB).labels, $compConjA.labels (|) $compConjB.labels);
+is(($compConjA AND $compConjB).iids, $compConjA.iids (|) $compConjB.iids);
+is(($compConjA).other.^name, ($compConjA AND $compConjB).other.^name);
+is(($compConjA AND $compConjB AND $compConjC).other.^name, ($compConjA AND $compConjB).other.^name, "three conj's same as two conj's");
+is((($compConjA AND $compConjB) AND $compConjC).other.^name, ($compConjA AND $compConjB).other.^name, 'braced three conj');
+is(([AND] $compConjA, $compConjB, $compConjC).other, %(1 => 2, 5 => 6, 8 => 6));
+exit();
+is(([AND] $compConjA, $compConjB, $compConjC).labels, $compConjA.labels (|) $compConjB.labels);
+is(([AND] $compConjA, $compConjB, $compConjC).iids, $compConjA.iids (|) $compConjB.iids);
+
+is(
+	ComparerConjunction.new(labels => ('la' => 'foo', 'la' => 'bar')).labels.keys,
+	['la' => 'foo', 'la' => 'bar']
+);
+
+is((GIQConjunction.new AND GIQConjunction.new).gist,
+	GIQConjunction.new.gist
+);
+
+
+is(GitlabIssueQuery.and(GitlabIssueQuery.new, GitlabIssueQuery.new).options.gist,
+	GitlabIssueQuery.new.options.gist
+);
+
